@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CBT System - Ujian Online</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,33 +19,67 @@
       <p>Loading...</p>
     </div>
 
-    <!-- Subject Selection -->
-    <div x-show="!sessionId && !loading" class="container">
-      <div class="card">
+    <!-- Welcome Screen -->
+    <div x-show="!sessionId && !loading && !showConfigForm" class="container">
+      <div class="card welcome-card">
         <h1>🎓 Sistem Ujian CBT</h1>
-        <p class="subtitle">Pilih mata pelajaran untuk memulai ujian</p>
+        <p class="subtitle">Selamat datang di Computer-Based Test System</p>
+        <button @click="showConfigForm = true" class="btn-primary btn-large">Mulai Ujian</button>
         
-        <div class="subjects">
-          <template x-for="subject in subjects" :key="subject.id">
-            <div class="subject-card" @click="selectSubject(subject)">
-              <h3 x-text="subject.name"></h3>
-              <p x-text="`${subject._count?.questions || 0} soal tersedia`"></p>
-            </div>
-          </template>
+        <div class="stats-info" x-show="subjects.length > 0">
+          <h3>📊 Statistik Bank Soal</h3>
+          <div class="stats-grid">
+            <template x-for="subject in subjects" :key="subject.id">
+              <div class="stat-item">
+                <strong x-text="subject.name"></strong>
+                <span x-text="formatQuestionCount(subject._count?.questions || 0)"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Config Form -->
+    <div x-show="!sessionId && !loading && showConfigForm" class="container">
+      <div class="card">
+        <h1>📝 Konfigurasi Ujian</h1>
+        <p class="subtitle">Lengkapi informasi di bawah ini</p>
+
+        <div class="form-group">
+          <label>Mata Pelajaran:</label>
+          <select x-model="selectedSubjectId" required>
+            <option value="">-- Pilih Mata Pelajaran --</option>
+            <template x-for="subject in subjects" :key="subject.id">
+              <option :value="subject.id" x-text="subject.name"></option>
+            </template>
+          </select>
         </div>
 
-        <!-- Config -->
-        <div class="config" x-show="selectedSubject">
-          <h3>Konfigurasi Ujian</h3>
-          <div class="form-group">
-            <label>Durasi (menit):</label>
-            <input type="number" x-model.number="config.duration" min="1" max="180">
-          </div>
-          <div class="form-group">
-            <label>Jumlah Soal:</label>
-            <input type="number" x-model.number="config.totalQuestions" min="1" max="50">
-          </div>
-          <button @click="startExam()" class="btn-primary">Mulai Ujian</button>
+        <div class="form-group">
+          <label>Tingkat Kesulitan:</label>
+          <select x-model="config.level">
+            <option value="">Semua Level (Acak)</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+            <option value="expert">Expert</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Jumlah Soal:</label>
+          <input type="number" x-model.number="config.totalQuestions" min="1" max="50" required>
+        </div>
+
+        <div class="form-group">
+          <label>Durasi (menit):</label>
+          <input type="number" x-model.number="config.duration" min="1" max="180" required>
+        </div>
+
+        <div class="form-actions">
+          <button @click="showConfigForm = false; selectedSubjectId = ''" class="btn-secondary">Batal</button>
+          <button @click="startExam()" class="btn-primary" :disabled="!selectedSubjectId">Mulai Ujian</button>
         </div>
       </div>
     </div>
@@ -66,7 +103,7 @@
           <span class="level-badge" :class="`level-${currentQuestion?.level}`" x-text="currentQuestion?.level"></span>
         </div>
         
-        <h3 class="question-text" x-text="currentQuestion?.text"></h3>
+        <h3 class="question-text" x-html="renderMath(currentQuestion?.text)"></h3>
         
         <div class="answers">
           <template x-for="(answer, idx) in currentQuestion?.answers" :key="answer.id">
@@ -79,7 +116,7 @@
                 :checked="userAnswers[currentQuestion.id] === answer.id"
               >
               <span class="answer-label" x-text="String.fromCharCode(65 + idx)"></span>
-              <span class="answer-text" x-text="answer.text"></span>
+              <span class="answer-text" x-html="renderMath(answer.text)"></span>
             </label>
           </template>
         </div>

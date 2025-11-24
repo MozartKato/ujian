@@ -45,6 +45,66 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
+.welcome-card {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.btn-large {
+  font-size: 1.2rem;
+  padding: 18px 48px;
+  margin-top: 30px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  justify-content: flex-end;
+}
+
+.form-actions button {
+  min-width: 120px;
+}
+
+.stats-info {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.stats-info h3 {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.stat-item strong {
+  color: #333;
+  font-size: 1rem;
+}
+
+.stat-item span {
+  color: #666;
+  font-size: 0.9rem;
+}
+
 h1 {
   font-size: 2.5rem;
   color: #333;
