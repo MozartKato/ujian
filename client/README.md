@@ -1,68 +1,80 @@
-# Client - Frontend CBT System
+# CBT Client - Frontend
 
-Frontend untuk sistem ujian berbasis komputer menggunakan Alpine.js.
+Modern, scalable frontend untuk Computer-Based Test System menggunakan Vite, Alpine.js, dan KaTeX.
 
-## Struktur Folder
+## 📁 Struktur Proyek
 
 ```
 client/
-├── src/           # Source files frontend
-│   ├── index.html # Halaman utama exam
-│   ├── app.js     # Logic Alpine.js
-│   └── style.css  # Styling CSS
-└── public/        # Build output (untuk production nanti)
+├── src/
+│   ├── js/
+│   │   ├── config/         # Konfigurasi dan constants
+│   │   ├── services/       # API services
+│   │   ├── stores/         # Alpine.js stores
+│   │   ├── utils/          # Helper functions
+│   │   └── main.js         # Entry point
+│   ├── styles/
+│   │   └── main.css        # Global styles
+│   └── index.html          # HTML template
+├── package.json
+└── vite.config.js
 ```
 
-## Teknologi
+## 🚀 Development
 
-- **Alpine.js 3.x** - Reactive framework
-- **Vanilla CSS** - Styling dengan gradients dan animations
+### Install Dependencies
 
-## Setup Tailwind CSS (Opsional)
-
-Jika ingin menggunakan Tailwind CSS:
-
-1. Install dependencies:
 ```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init
+npm install
 ```
 
-2. Buat file `tailwind.config.js`:
-```js
-module.exports = {
-  content: ["./client/src/**/*.{html,js}"],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-```
+### Run Development Server
 
-3. Buat file `client/src/input.css`:
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-4. Update `package.json` tambahkan script:
-```json
-"scripts": {
-  "build:css": "tailwindcss -i ./client/src/input.css -o ./client/src/style.css --watch"
-}
-```
-
-5. Jalankan:
-```bash
-npm run build:css
-```
-
-## Development
-
-Server otomatis serve dari `client/src/` saat running:
 ```bash
 npm run dev
 ```
 
-Akses di: http://localhost:3000
+Server akan berjalan di `http://localhost:5173`
+
+### Build untuk Production
+
+```bash
+npm run build
+```
+
+Output akan ada di folder `dist/`
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## 🛠️ Tech Stack
+
+- **Vite** - Build tool & dev server
+- **Alpine.js** - Lightweight reactive framework
+- **KaTeX** - Math rendering
+- **Vanilla CSS** - Styling
+
+## 📝 Fitur
+
+- ✅ No CDN dependencies (semua lokal)
+- ✅ Modular architecture
+- ✅ Hot Module Replacement (HMR)
+- ✅ Production build optimization
+- ✅ API proxy untuk development
+- ✅ Math rendering dengan KaTeX
+- ✅ Reactive state management
+
+## 🔧 Configuration
+
+Edit `vite.config.js` untuk konfigurasi build dan dev server.
+
+Edit `src/js/config/constants.js` untuk API endpoints dan exam config.
+
+## 📦 Dependencies
+
+- `alpinejs`: ^3.14.1
+- `katex`: ^0.16.9
+- `vite`: ^5.4.11 (dev)

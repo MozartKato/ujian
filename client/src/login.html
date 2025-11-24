@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - CBT System</title>
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/auth.css">
+</head>
+<body>
+  <div id="app" x-data="authStore()" x-init="init()">
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="/" class="nav-logo">🎓 CBT System</a>
+        <div class="nav-menu">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/register.html" class="nav-link">Register</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Login Form -->
+    <div class="auth-container">
+      <div class="auth-card">
+        <h1>🔐 Login</h1>
+        <p class="auth-subtitle">Masuk untuk mengakses ujian dan riwayat Anda</p>
+
+        <form @submit.prevent="handleLogin" class="auth-form">
+          <div class="form-group">
+            <label>Email:</label>
+            <input 
+              type="email" 
+              x-model="formData.email" 
+              required 
+              placeholder="your@email.com"
+              autocomplete="email"
+            >
+          </div>
+
+          <div class="form-group">
+            <label>Password:</label>
+            <input 
+              type="password" 
+              x-model="formData.password" 
+              required 
+              placeholder="••••••••"
+              autocomplete="current-password"
+              minlength="6"
+            >
+          </div>
+
+          <div x-show="error" class="error-message" x-text="error"></div>
+
+          <button type="submit" class="btn-primary" :disabled="loading">
+            <span x-show="!loading">Login</span>
+            <span x-show="loading">Loading...</span>
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>Belum punya akun? <a href="/register.html">Daftar di sini</a></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import Alpine from 'alpinejs';
+    import ApiService from './js/services/api.service.js';
+    
+    window.Alpine = Alpine;
+    
+    Alpine.data('authStore', () => ({
+        formData: {
+          email: '',
+          password: ''
+        },
+        loading: false,
+        error: '',
+
+        async init() {
+          // Check if already logged in
+          try {
+            await ApiService.getCurrentUser();
+            window.location.href = '/';
+          } catch (error) {
+            // Not logged in, stay on login page
+          }
+        },
+
+        async handleLogin() {
+          this.loading = true;
+          this.error = '';
+
+          try {
+            const response = await ApiService.login(this.formData);
+            if (response.user) {
+              window.location.href = '/';
+            }
+          } catch (error) {
+            this.error = error.message || 'Login gagal. Periksa email dan password Anda.';
+          } finally {
+            this.loading = false;
+          }
+        }
+      }));
+    
+    Alpine.start();
+  </script>
+</body>
+</html>

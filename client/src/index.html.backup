@@ -49,15 +49,15 @@
       <div class="card welcome-card">
         <h1>🎓 Sistem Ujian CBT</h1>
         <p class="subtitle">Selamat datang di Computer-Based Test System</p>
-        <button @click="exam.showConfigForm = true" class="btn-primary btn-large">Mulai Ujian</button>
+        <button @click="showConfigForm = true" class="btn-primary btn-large">Mulai Ujian</button>
         
-        <div class="stats-info" x-show="exam.subjects.length > 0">
+        <div class="stats-info" x-show="subjects.length > 0">
           <h3>📊 Statistik Bank Soal</h3>
           <div class="stats-grid">
-            <template x-for="subject in exam.subjects" :key="subject.id">
+            <template x-for="subject in subjects" :key="subject.id">
               <div class="stat-item">
                 <strong x-text="subject.name"></strong>
-                <span x-text="exam.formatQuestionCount(subject._count?.questions || 0)"></span>
+                <span x-text="formatQuestionCount(subject._count?.questions || 0)"></span>
               </div>
             </template>
           </div>
@@ -66,16 +66,16 @@
     </div>
 
     <!-- Config Form -->
-    <div x-show="!exam.sessionId && !exam.loading && exam.showConfigForm" class="container">
+    <div x-show="!sessionId && !loading && showConfigForm" class="container">
       <div class="card">
         <h1>📝 Konfigurasi Ujian</h1>
         <p class="subtitle">Lengkapi informasi di bawah ini</p>
 
         <div class="form-group">
           <label>Mata Pelajaran:</label>
-          <select x-model="exam.selectedSubjectId" required>
+          <select x-model="selectedSubjectId" required>
             <option value="">-- Pilih Mata Pelajaran --</option>
-            <template x-for="subject in exam.subjects" :key="subject.id">
+            <template x-for="subject in subjects" :key="subject.id">
               <option :value="subject.id" x-text="subject.name"></option>
             </template>
           </select>
@@ -83,7 +83,7 @@
 
         <div class="form-group">
           <label>Tingkat Kesulitan:</label>
-          <select x-model="exam.config.level">
+          <select x-model="config.level">
             <option value="">Semua Level (Acak)</option>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
@@ -94,54 +94,54 @@
 
         <div class="form-group">
           <label>Jumlah Soal:</label>
-          <input type="number" x-model.number="exam.config.totalQuestions" min="1" max="50" required>
+          <input type="number" x-model.number="config.totalQuestions" min="1" max="50" required>
         </div>
 
         <div class="form-group">
           <label>Durasi (menit):</label>
-          <input type="number" x-model.number="exam.config.duration" min="1" max="180" required>
+          <input type="number" x-model.number="config.duration" min="1" max="180" required>
         </div>
 
         <div class="form-actions">
-          <button @click="exam.showConfigForm = false; exam.selectedSubjectId = ''" class="btn-secondary">Batal</button>
-          <button @click="exam.startExam()" class="btn-primary" :disabled="!exam.selectedSubjectId">Mulai Ujian</button>
+          <button @click="showConfigForm = false; selectedSubjectId = ''" class="btn-secondary">Batal</button>
+          <button @click="startExam()" class="btn-primary" :disabled="!selectedSubjectId">Mulai Ujian</button>
         </div>
       </div>
     </div>
 
     <!-- Exam Screen -->
-    <div x-show="exam.sessionId && exam.status === 'ONGOING'" class="exam-container">
+    <div x-show="sessionId && status === 'ONGOING'" class="exam-container">
       <!-- Header -->
       <div class="exam-header">
         <div>
-          <h2 x-text="exam.selectedSubject?.name"></h2>
-          <p>Soal <span x-text="exam.currentQuestionIndex + 1"></span> dari <span x-text="exam.questions.length"></span></p>
+          <h2 x-text="selectedSubject?.name"></h2>
+          <p>Soal <span x-text="currentQuestionIndex + 1"></span> dari <span x-text="questions.length"></span></p>
         </div>
-        <div class="timer" :class="exam.timeLeft < 60 ? 'timer-warning' : ''">
-          <span x-text="exam.formatTime(exam.timeLeft)"></span>
+        <div class="timer" :class="timeLeft < 60 ? 'timer-warning' : ''">
+          <span x-text="formatTime(timeLeft)"></span>
         </div>
       </div>
 
       <!-- Question -->
-      <div class="question-container" x-show="exam.currentQuestion">
+      <div class="question-container" x-show="currentQuestion">
         <div class="question-header">
-          <span class="level-badge" :class="`level-${exam.currentQuestion?.level}`" x-text="exam.currentQuestion?.level"></span>
+          <span class="level-badge" :class="`level-${currentQuestion?.level}`" x-text="currentQuestion?.level"></span>
         </div>
         
-        <h3 class="question-text" x-html="exam.renderMath(exam.currentQuestion?.text)"></h3>
+        <h3 class="question-text" x-html="renderMath(currentQuestion?.text)"></h3>
         
         <div class="answers">
-          <template x-for="(answer, idx) in exam.currentQuestion?.answers" :key="answer.id">
-            <label class="answer-option" :class="{ 'selected': exam.userAnswers[exam.currentQuestion.id] === answer.id }">
+          <template x-for="(answer, idx) in currentQuestion?.answers" :key="answer.id">
+            <label class="answer-option" :class="{ 'selected': userAnswers[currentQuestion.id] === answer.id }">
               <input 
                 type="radio" 
-                :name="`q-${exam.currentQuestion.id}`" 
+                :name="`q-${currentQuestion.id}`" 
                 :value="answer.id"
-                @change="exam.selectAnswer(exam.currentQuestion.id, answer.id)"
-                :checked="exam.userAnswers[exam.currentQuestion.id] === answer.id"
+                @change="selectAnswer(currentQuestion.id, answer.id)"
+                :checked="userAnswers[currentQuestion.id] === answer.id"
               >
               <span class="answer-label" x-text="String.fromCharCode(65 + idx)"></span>
-              <span class="answer-text" x-html="exam.renderMath(answer.text)"></span>
+              <span class="answer-text" x-html="renderMath(answer.text)"></span>
             </label>
           </template>
         </div>
@@ -149,18 +149,18 @@
 
       <!-- Navigation -->
       <div class="exam-footer">
-        <button @click="exam.prevQuestion()" :disabled="exam.currentQuestionIndex === 0" class="btn-secondary">
+        <button @click="prevQuestion()" :disabled="currentQuestionIndex === 0" class="btn-secondary">
           ← Sebelumnya
         </button>
         
         <div class="question-nav">
-          <template x-for="(q, idx) in exam.questions" :key="q.id">
+          <template x-for="(q, idx) in questions" :key="q.id">
             <button 
-              @click="exam.currentQuestionIndex = idx"
+              @click="currentQuestionIndex = idx"
               class="question-num"
               :class="{
-                'active': idx === exam.currentQuestionIndex,
-                'answered': exam.userAnswers[q.id]
+                'active': idx === currentQuestionIndex,
+                'answered': userAnswers[q.id]
               }"
               x-text="idx + 1"
             ></button>
@@ -168,35 +168,35 @@
         </div>
 
         <button 
-          @click="exam.currentQuestionIndex < exam.questions.length - 1 ? exam.nextQuestion() : exam.confirmSubmit()" 
+          @click="currentQuestionIndex < questions.length - 1 ? nextQuestion() : confirmSubmit()" 
           class="btn-primary"
-          x-text="exam.currentQuestionIndex < exam.questions.length - 1 ? 'Selanjutnya →' : 'Selesai'"
+          x-text="currentQuestionIndex < questions.length - 1 ? 'Selanjutnya →' : 'Selesai'"
         ></button>
       </div>
     </div>
 
     <!-- Result Screen -->
-    <div x-show="exam.status === 'SUBMITTED' || exam.status === 'TIMEOUT'" class="container">
+    <div x-show="status === 'SUBMITTED' || status === 'TIMEOUT'" class="container">
       <div class="card result-card">
-        <div class="result-icon" x-text="exam.status === 'TIMEOUT' ? '⏰' : '🎉'"></div>
-        <h1 x-text="exam.status === 'TIMEOUT' ? 'Waktu Habis!' : 'Ujian Selesai!'"></h1>
+        <div class="result-icon" x-text="status === 'TIMEOUT' ? '⏰' : '🎉'"></div>
+        <h1 x-text="status === 'TIMEOUT' ? 'Waktu Habis!' : 'Ujian Selesai!'"></h1>
         
         <div class="result-stats">
           <div class="stat">
-            <div class="stat-value" x-text="exam.summary.totalQuestions"></div>
+            <div class="stat-value" x-text="summary.totalQuestions"></div>
             <div class="stat-label">Total Soal</div>
           </div>
           <div class="stat">
-            <div class="stat-value" x-text="exam.summary.correctAnswers"></div>
+            <div class="stat-value" x-text="summary.correctAnswers"></div>
             <div class="stat-label">Benar</div>
           </div>
           <div class="stat">
-            <div class="stat-value" x-text="Math.round((exam.summary.correctAnswers / exam.summary.totalQuestions) * 100) + '%'"></div>
+            <div class="stat-value" x-text="Math.round((summary.correctAnswers / summary.totalQuestions) * 100) + '%'"></div>
             <div class="stat-label">Nilai</div>
           </div>
         </div>
 
-        <button @click="exam.resetExam()" class="btn-primary">Ujian Baru</button>
+        <button @click="resetExam()" class="btn-primary">Ujian Baru</button>
       </div>
     </div>
 

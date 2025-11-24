@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil - CBT System</title>
+  <link rel="stylesheet" href="./styles/main.css">
+  <link rel="stylesheet" href="./styles/auth.css">
+</head>
+<body>
+  <div id="app" x-data="profileApp()" x-init="init()">
+    
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="/" class="nav-logo">🎓 CBT System</a>
+        <div class="nav-menu">
+          <a href="/" class="nav-link">Home</a>
+          <a href="/history.html" class="nav-link">Riwayat</a>
+          <a href="/profile.html" class="nav-link active">Profil</a>
+          <div class="nav-user" x-show="user">
+            <button @click="logout()" class="btn-logout">Logout</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Loading -->
+    <div x-show="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+
+    <!-- Profile -->
+    <div x-show="!loading" class="container" style="padding-top: 40px;">
+      <div class="card" style="max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <div style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white;">
+            👤
+          </div>
+          <h1 x-text="user?.name" style="margin-bottom: 5px;"></h1>
+          <p style="color: #666; margin-bottom: 0;">@<span x-text="user?.user_name"></span></p>
+        </div>
+
+        <div class="profile-info">
+          <div class="profile-item">
+            <span class="profile-label">📧 Email:</span>
+            <span class="profile-value" x-text="user?.email"></span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">👤 Username:</span>
+            <span class="profile-value" x-text="user?.user_name"></span>
+          </div>
+          <div class="profile-item">
+            <span class="profile-label">🆔 User ID:</span>
+            <span class="profile-value" x-text="user?.id" style="font-size: 0.85rem; color: #999;"></span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 30px; border-top: 2px solid #f0f0f0;">
+          <a href="/history.html" class="btn-secondary" style="flex: 1; text-align: center; text-decoration: none;">
+            📜 Lihat Riwayat
+          </a>
+          <a href="/" class="btn-primary" style="flex: 1; text-align: center; text-decoration: none;">
+            📝 Mulai Ujian
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import Alpine from 'alpinejs';
+    import ApiService from './js/services/api.service.js';
+    
+    window.Alpine = Alpine;
+    
+    Alpine.data('profileApp', () => ({
+        user: null,
+        loading: true,
+
+        async init() {
+          try {
+            this.user = await ApiService.getCurrentUser();
+          } catch (error) {
+            // Not logged in, redirect to login
+            window.location.href = '/login.html';
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async logout() {
+          await ApiService.logout();
+          window.location.href = '/';
+        }
+      }));
+    
+    Alpine.start();
+  </script>
+
+  <style>
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .profile-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 10px;
+    }
+
+    .profile-label {
+      font-weight: 600;
+      color: #555;
+    }
+
+    .profile-value {
+      color: #333;
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .profile-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+    }
+  </style>
+</body>
+</html>

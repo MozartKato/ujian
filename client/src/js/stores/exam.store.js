@@ -1,7 +1,10 @@
-const API_URL = 'http://localhost:3000/api';
+import ApiService from '../services/api.service.js';
+import { EXAM_CONFIG } from '../config/constants.js';
+import { renderMath, formatTime, formatQuestionCount, shuffleArray } from '../utils/helpers.js';
 
-function examApp() {
+export function createExamStore() {
   return {
+    // State
     loading: false,
     subjects: [],
     selectedSubject: null,
@@ -16,49 +19,22 @@ function examApp() {
     timerInterval: null,
     summary: {},
     config: {
-      duration: 30,
-      totalQuestions: 5,
+      duration: EXAM_CONFIG.DEFAULT_DURATION,
+      totalQuestions: EXAM_CONFIG.DEFAULT_QUESTIONS,
       level: '',
     },
 
+    // Computed
     get currentQuestion() {
       return this.questions[this.currentQuestionIndex];
     },
 
-    formatQuestionCount(count) {
-      if (count > 10000) {
-        return '10000+ soal tersedia';
-      }
-      return `${count} soal tersedia`;
-    },
+    // Utils (exposed to template)
+    formatQuestionCount,
+    renderMath,
+    formatTime,
 
-    renderMath(text) {
-      if (!text) return '';
-      
-      // Replace inline math $...$ and display math $$...$$
-      let html = text;
-      
-      // Process display math first ($$...$$)
-      html = html.replace(/\$\$([^$]+)\$\$/g, (match, math) => {
-        try {
-          return katex.renderToString(math, { displayMode: true, throwOnError: false });
-        } catch (e) {
-          return match;
-        }
-      });
-      
-      // Process inline math ($...$)
-      html = html.replace(/\$([^$]+)\$/g, (match, math) => {
-        try {
-          return katex.renderToString(math, { displayMode: false, throwOnError: false });
-        } catch (e) {
-          return match;
-        }
-      });
-      
-      return html;
-    },
-
+    // Methods
     async init() {
       await this.loadSubjects();
     },
@@ -66,17 +42,12 @@ function examApp() {
     async loadSubjects() {
       this.loading = true;
       try {
-        const res = await fetch(`${API_URL}/subjects`);
-        this.subjects = await res.json();
+        this.subjects = await ApiService.getSubjects();
       } catch (err) {
         alert('Gagal memuat daftar mata pelajaran');
       } finally {
         this.loading = false;
       }
-    },
-
-    selectSubject(subject) {
-      this.selectedSubject = subject;
     },
 
     async startExam() {
@@ -85,7 +56,6 @@ function examApp() {
         return;
       }
 
-      // Find selected subject
       this.selectedSubject = this.subjects.find(s => s.id === this.selectedSubjectId);
       if (!this.selectedSubject) {
         alert('Mata pelajaran tidak ditemukan!');
@@ -94,13 +64,11 @@ function examApp() {
 
       this.loading = true;
       try {
-        // Load questions first to check availability
-        let url = `${API_URL}/questions/subject/${this.selectedSubject.id}`;
-        if (this.config.level) {
-          url += `?level=${this.config.level}`;
-        }
-        const questionsRes = await fetch(url);
-        const allQuestions = await questionsRes.json();
+        // Load questions
+        const allQuestions = await ApiService.getQuestionsBySubject(
+          this.selectedSubject.id,
+          this.config.level || null
+        );
 
         // Validate question availability
         if (allQuestions.length < this.config.totalQuestions) {
@@ -118,33 +86,22 @@ function examApp() {
         }
 
         // Create session
-        const sessionRes = await fetch(`${API_URL}/sessions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            subjectId: this.selectedSubject.id,
-            duration: this.config.duration,
-            totalQuestions: this.config.totalQuestions,
-          }),
+        const session = await ApiService.createSession({
+          subjectId: this.selectedSubject.id,
+          duration: this.config.duration,
+          totalQuestions: this.config.totalQuestions,
         });
 
-        if (!sessionRes.ok) throw new Error('Gagal memulai sesi');
-
-        const session = await sessionRes.json();
         this.sessionId = session.id;
         this.status = session.status;
 
-        // Random sample sesuai config
-        this.questions = this.shuffleArray(allQuestions).slice(
-          0,
-          this.config.totalQuestions
-        );
-
-        // Shuffle answers for each question
-        this.questions = this.questions.map(q => ({
-          ...q,
-          answers: this.shuffleArray(q.answers)
-        }));
+        // Random sample and shuffle
+        this.questions = shuffleArray(allQuestions)
+          .slice(0, this.config.totalQuestions)
+          .map(q => ({
+            ...q,
+            answers: shuffleArray(q.answers)
+          }));
 
         // Start timer
         this.timeLeft = this.config.duration * 60;
@@ -159,13 +116,8 @@ function examApp() {
     async selectAnswer(questionId, answerId) {
       this.userAnswers[questionId] = answerId;
 
-      // Auto-save ke backend
       try {
-        await fetch(`${API_URL}/sessions/${this.sessionId}/answers`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ questionId, answerId }),
-        });
+        await ApiService.saveAnswer(this.sessionId, { questionId, answerId });
       } catch (err) {
         console.error('Failed to save answer:', err);
       }
@@ -193,12 +145,6 @@ function examApp() {
       }, 1000);
     },
 
-    formatTime(seconds) {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    },
-
     async confirmSubmit() {
       const answered = Object.keys(this.userAnswers).length;
       const total = this.questions.length;
@@ -220,10 +166,7 @@ function examApp() {
       this.loading = true;
 
       try {
-        await fetch(`${API_URL}/sessions/${this.sessionId}/finish`, {
-          method: 'POST',
-        });
-
+        await ApiService.finishSession(this.sessionId);
         await this.loadSummary();
       } catch (err) {
         alert('Gagal submit ujian: ' + err.message);
@@ -240,8 +183,7 @@ function examApp() {
 
     async loadSummary() {
       try {
-        const res = await fetch(`${API_URL}/sessions/${this.sessionId}`);
-        const data = await res.json();
+        const data = await ApiService.getSession(this.sessionId);
         this.summary = data;
         this.status = 'SUBMITTED';
       } catch (err) {
@@ -261,15 +203,6 @@ function examApp() {
       this.timeLeft = 0;
       this.summary = {};
       clearInterval(this.timerInterval);
-    },
-
-    shuffleArray(array) {
-      const arr = [...array];
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    },
+    }
   };
 }

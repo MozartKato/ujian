@@ -91,7 +91,7 @@ CREATE DATABASE examdb;
 cp .env.example .env
 
 # Edit .env dan sesuaikan dengan konfigurasi database Anda
-DATABASE_URL="mysql://laravel:@localhost:3306/examdb"
+DATABASE_URL="mysql://user:password@localhost:3306/examdb"
 ```
 
 5. **Run migrations**

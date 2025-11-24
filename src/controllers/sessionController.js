@@ -1,14 +1,17 @@
 const { prisma } = require("../prisma");
 
 async function startSession(req, res) {
-  const { userId, subjectId, duration = 60, totalQuestions = 10 } = req.body || {};
+  const { subjectId, duration = 60, totalQuestions = 10 } = req.body || {};
+  
+  // Get userId from auth middleware (if logged in)
+  const userId = req.user?.id || null;
 
   try {
     const endDate = new Date(Date.now() + duration * 60000); // duration dalam menit
     
     const session = await prisma.session.create({
       data: {
-        user_id: userId ?? null,
+        user_id: userId,
         subject_id: subjectId,
         duration,
         total_questions: totalQuestions,
@@ -135,10 +138,59 @@ async function getSessionSummary(req, res) {
   }
 }
 
+// Get user session history
+async function getUserHistory(req, res) {
+  const userId = req.user.id;
+  
+  try {
+    const sessions = await prisma.session.findMany({
+      where: { 
+        user_id: userId,
+        status: { in: ['SUBMITTED', 'TIMEOUT'] }
+      },
+      include: {
+        subject: true,
+        answers: {
+          include: {
+            answer: true
+          }
+        }
+      },
+      orderBy: {
+        create_date: 'desc'
+      }
+    });
+
+    // Calculate scores for each session
+    const history = sessions.map(session => {
+      const totalQuestions = session.answers.length;
+      const correctAnswers = session.answers.filter(a => a.answer?.is_right).length;
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+      return {
+        id: session.id,
+        subject: session.subject.name,
+        date: session.create_date,
+        duration: session.duration,
+        totalQuestions,
+        correctAnswers,
+        score,
+        status: session.status
+      };
+    });
+
+    res.json(history);
+  } catch (err) {
+    console.error("Failed to fetch history:", err);
+    res.status(500).json({ message: "Failed to fetch history" });
+  }
+}
+
 module.exports = { 
   startSession, 
   submitAnswer, 
   getSessionSummary,
   checkSessionStatus,
   finishSession,
+  getUserHistory,
 };
