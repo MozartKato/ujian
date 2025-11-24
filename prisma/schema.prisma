@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        String    @id @default(uuid()) @db.Char(36)
+  name      String
+  user_name String    @unique
+  email     String    @unique
+  password  String
+  sessions  Session[] // relasi 1-many ke Session
+
+  @@map("users")
+}
+
+model Subject {
+  id        String     @id @default(uuid()) @db.Char(36)
+  name      String
+  questions Question[]
+
+  @@map("subjects")
+}
+
+model Question {
+  id         String   @id @default(uuid()) @db.Char(36)
+  subject_id String
+  text       String   @db.Text
+  answers    Answer[]
+  sessions   SessionAnswer[]
+
+  subject Subject @relation(fields: [subject_id], references: [id])
+
+  @@map("questions")
+  @@index([subject_id])
+}
+
+model Answer {
+  id          String   @id @default(uuid()) @db.Char(36)
+  question_id String
+  text        String   @db.Text
+  is_right    Boolean
+  sessions    SessionAnswer[]
+
+  question Question @relation(fields: [question_id], references: [id])
+
+  @@map("answers")
+  @@index([question_id])
+}
+
+model Session {
+  id          String          @id @default(uuid()) @db.Char(36)
+  user_id     String?         // nullable = anonymous
+  create_date DateTime        @default(now())
+  answers     SessionAnswer[]
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@map("sessions")
+  @@index([user_id])
+}
+
+model SessionAnswer {
+  id                 String   @id @default(uuid()) @db.Char(36)
+  session_id         String
+  question_id        String
+  answer_selected_id String?
+
+  session  Session  @relation(fields: [session_id], references: [id])
+  question Question @relation(fields: [question_id], references: [id])
+  answer   Answer?  @relation(fields: [answer_selected_id], references: [id])
+
+  @@map("session_answers")
+  @@index([session_id])
+  @@index([question_id])
+  @@index([answer_selected_id])
+}
