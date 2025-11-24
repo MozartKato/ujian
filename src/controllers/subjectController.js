@@ -11,14 +11,9 @@ async function listSubjects(_req, res) {
 
 async function addSubject(req, res) {
   const { name } = req.body || {};
-  
-  console.log("Request body:", req.body);
-  console.log("Name value:", name);
-
   if (!name) {
     return res.status(400).json({ message: "Name is required" });
   }
-
   try {
     const newSubject = await prisma.subject.create({
       data: { name },

@@ -25,14 +25,23 @@ model Subject {
   id        String     @id @default(uuid()) @db.Char(36)
   name      String
   questions Question[]
+  sessions  Session[]
 
   @@map("subjects")
+}
+
+enum QuestionLevel {
+  easy
+  medium
+  hard
+  expert
 }
 
 model Question {
   id         String   @id @default(uuid()) @db.Char(36)
   subject_id String
   text       String   @db.Text
+  level      QuestionLevel
   answers    Answer[]
   sessions   SessionAnswer[]
 
@@ -55,16 +64,29 @@ model Answer {
   @@index([question_id])
 }
 
-model Session {
-  id          String          @id @default(uuid()) @db.Char(36)
-  user_id     String?         // nullable = anonymous
-  create_date DateTime        @default(now())
-  answers     SessionAnswer[]
+enum SessionStatus {
+  ONGOING
+  SUBMITTED
+  TIMEOUT
+}
 
-  user User? @relation(fields: [user_id], references: [id])
+model Session {
+  id              String          @id @default(uuid()) @db.Char(36)
+  user_id         String?         // nullable = anonymous
+  subject_id      String
+  status          SessionStatus   @default(ONGOING)
+  duration        Int             // durasi dalam menit
+  total_questions Int             // jumlah soal
+  create_date     DateTime        @default(now())
+  end_date        DateTime        // dihitung otomatis
+  answers         SessionAnswer[]
+
+  user    User?    @relation(fields: [user_id], references: [id])
+  subject Subject  @relation(fields: [subject_id], references: [id])
 
   @@map("sessions")
   @@index([user_id])
+  @@index([subject_id])
 }
 
 model SessionAnswer {
@@ -81,4 +103,5 @@ model SessionAnswer {
   @@index([session_id])
   @@index([question_id])
   @@index([answer_selected_id])
+  @@unique([session_id, question_id])
 }

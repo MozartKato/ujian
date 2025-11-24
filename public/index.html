@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBT System - Ujian Online</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" x-data="examApp()" x-init="init()">
+    
+    <!-- Loading State -->
+    <div x-show="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+
+    <!-- Subject Selection -->
+    <div x-show="!sessionId && !loading" class="container">
+      <div class="card">
+        <h1>🎓 Sistem Ujian CBT</h1>
+        <p class="subtitle">Pilih mata pelajaran untuk memulai ujian</p>
+        
+        <div class="subjects">
+          <template x-for="subject in subjects" :key="subject.id">
+            <div class="subject-card" @click="selectSubject(subject)">
+              <h3 x-text="subject.name"></h3>
+              <p x-text="`${subject._count?.questions || 0} soal tersedia`"></p>
+            </div>
+          </template>
+        </div>
+
+        <!-- Config -->
+        <div class="config" x-show="selectedSubject">
+          <h3>Konfigurasi Ujian</h3>
+          <div class="form-group">
+            <label>Durasi (menit):</label>
+            <input type="number" x-model.number="config.duration" min="1" max="180">
+          </div>
+          <div class="form-group">
+            <label>Jumlah Soal:</label>
+            <input type="number" x-model.number="config.totalQuestions" min="1" max="50">
+          </div>
+          <button @click="startExam()" class="btn-primary">Mulai Ujian</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Exam Screen -->
+    <div x-show="sessionId && status === 'ONGOING'" class="exam-container">
+      <!-- Header -->
+      <div class="exam-header">
+        <div>
+          <h2 x-text="selectedSubject?.name"></h2>
+          <p>Soal <span x-text="currentQuestionIndex + 1"></span> dari <span x-text="questions.length"></span></p>
+        </div>
+        <div class="timer" :class="timeLeft < 60 ? 'timer-warning' : ''">
+          <span x-text="formatTime(timeLeft)"></span>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <div class="question-container" x-show="currentQuestion">
+        <div class="question-header">
+          <span class="level-badge" :class="`level-${currentQuestion?.level}`" x-text="currentQuestion?.level"></span>
+        </div>
+        
+        <h3 class="question-text" x-text="currentQuestion?.text"></h3>
+        
+        <div class="answers">
+          <template x-for="(answer, idx) in currentQuestion?.answers" :key="answer.id">
+            <label class="answer-option" :class="{ 'selected': userAnswers[currentQuestion.id] === answer.id }">
+              <input 
+                type="radio" 
+                :name="`q-${currentQuestion.id}`" 
+                :value="answer.id"
+                @change="selectAnswer(currentQuestion.id, answer.id)"
+                :checked="userAnswers[currentQuestion.id] === answer.id"
+              >
+              <span class="answer-label" x-text="String.fromCharCode(65 + idx)"></span>
+              <span class="answer-text" x-text="answer.text"></span>
+            </label>
+          </template>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="exam-footer">
+        <button @click="prevQuestion()" :disabled="currentQuestionIndex === 0" class="btn-secondary">
+          ← Sebelumnya
+        </button>
+        
+        <div class="question-nav">
+          <template x-for="(q, idx) in questions" :key="q.id">
+            <button 
+              @click="currentQuestionIndex = idx"
+              class="question-num"
+              :class="{
+                'active': idx === currentQuestionIndex,
+                'answered': userAnswers[q.id]
+              }"
+              x-text="idx + 1"
+            ></button>
+          </template>
+        </div>
+
+        <button 
+          @click="currentQuestionIndex < questions.length - 1 ? nextQuestion() : confirmSubmit()" 
+          class="btn-primary"
+          x-text="currentQuestionIndex < questions.length - 1 ? 'Selanjutnya →' : 'Selesai'"
+        ></button>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div x-show="status === 'SUBMITTED' || status === 'TIMEOUT'" class="container">
+      <div class="card result-card">
+        <div class="result-icon" x-text="status === 'TIMEOUT' ? '⏰' : '🎉'"></div>
+        <h1 x-text="status === 'TIMEOUT' ? 'Waktu Habis!' : 'Ujian Selesai!'"></h1>
+        
+        <div class="result-stats">
+          <div class="stat">
+            <div class="stat-value" x-text="summary.totalQuestions"></div>
+            <div class="stat-label">Total Soal</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" x-text="summary.correctAnswers"></div>
+            <div class="stat-label">Benar</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" x-text="Math.round((summary.correctAnswers / summary.totalQuestions) * 100) + '%'"></div>
+            <div class="stat-label">Nilai</div>
+          </div>
+        </div>
+
+        <button @click="resetExam()" class="btn-primary">Ujian Baru</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

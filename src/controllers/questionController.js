@@ -15,4 +15,20 @@ async function listQuestionsBySubject(req, res) {
   }
 }
 
-module.exports = { listQuestionsBySubject };
+async function addQuestion(req, res) {
+  const { subjectId, text, level } = req.body || {};
+  if (!subjectId || !text || !level) {
+    return res.status(400).json({ message: "subjectId, text, and level are required" });
+  }
+  try {
+    const newQuestion = await prisma.question.create({
+      data: { subject_id: subjectId, text, level },
+    });
+    res.status(201).json(newQuestion);
+  } catch (err) {
+    console.error("Error adding question:", err);
+    res.status(500).json({ message: "Failed to add question", error: err.message });
+  }
+}
+
+module.exports = { listQuestionsBySubject, addQuestion };
