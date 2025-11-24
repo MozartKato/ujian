@@ -1,6 +1,8 @@
-import { Router } from "express";
-import { listQuestionsBySubject } from "../controllers/questionController.js";
+const { Router } = require("express");
+const { listQuestionsBySubject } = require("../controllers/questionController");
 
-export const questionRouter = Router();
+const questionRouter = Router();
 
 questionRouter.get("/subject/:subjectId", listQuestionsBySubject);
+
+module.exports = { questionRouter };

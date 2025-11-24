@@ -1,6 +1,6 @@
-import { prisma } from "../prisma.js";
+const { prisma } = require("../prisma");
 
-export async function startSession(req, res) {
+async function startSession(req, res) {
   const { userId } = req.body || {};
 
   try {
@@ -16,7 +16,7 @@ export async function startSession(req, res) {
   }
 }
 
-export async function submitAnswer(req, res) {
+async function submitAnswer(req, res) {
   const sessionId = req.params.sessionId;
   const { questionId, answerId } = req.body || {};
 
@@ -39,7 +39,7 @@ export async function submitAnswer(req, res) {
   }
 }
 
-export async function getSessionSummary(req, res) {
+async function getSessionSummary(req, res) {
   const sessionId = req.params.sessionId;
 
   try {
@@ -64,3 +64,5 @@ export async function getSessionSummary(req, res) {
     res.status(500).json({ message: "Failed to fetch session summary" });
   }
 }
+
+module.exports = { startSession, submitAnswer, getSessionSummary };

@@ -1,6 +1,6 @@
-import { prisma } from "../prisma.js";
+const { prisma } = require("../prisma");
 
-export async function listQuestionsBySubject(req, res) {
+async function listQuestionsBySubject(req, res) {
   const subjectId = req.params.subjectId;
 
   try {
@@ -14,3 +14,5 @@ export async function listQuestionsBySubject(req, res) {
     res.status(500).json({ message: "Failed to fetch questions" });
   }
 }
+
+module.exports = { listQuestionsBySubject };

@@ -1,6 +1,10 @@
-import { Router } from "express";
-import { listSubjects } from "../controllers/subjectController.js";
+const { Router } = require("express");
+const { listSubjects, addSubject } = require("../controllers/subjectController");
 
-export const subjectRouter = Router();
+const subjectRouter = Router();
 
 subjectRouter.get("/", listSubjects);
+subjectRouter.post("/", addSubject);
+
+module.exports = { subjectRouter };
+subjectRouter.post("/", addSubject);

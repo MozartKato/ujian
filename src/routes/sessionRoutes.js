@@ -1,12 +1,14 @@
-import { Router } from "express";
-import {
+const { Router } = require("express");
+const {
   startSession,
   submitAnswer,
   getSessionSummary,
-} from "../controllers/sessionController.js";
+} = require("../controllers/sessionController");
 
-export const sessionRouter = Router();
+const sessionRouter = Router();
 
 sessionRouter.post("/", startSession);
 sessionRouter.post("/:sessionId/answers", submitAnswer);
 sessionRouter.get("/:sessionId", getSessionSummary);
+
+module.exports = { sessionRouter };
