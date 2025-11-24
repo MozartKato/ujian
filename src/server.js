@@ -11,7 +11,9 @@ app.set('strict routing', false);
 app.use(express.json());
 
 // Serve static frontend files
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "../client/src")));
+// Serve static assets (images, media, etc.)
+app.use('/assets', express.static(path.join(__dirname, "../public")));
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
